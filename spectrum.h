@@ -4,8 +4,8 @@
 #include <stdbool.h>
 
 /*define size of the grid*/
-#define RESE 200
-#define REST 300
+#define RESE 600
+#define REST 1000
 #define EMAX 60.0
 #define TMAX 10.0
 #define STEPE EMAX/RESE
