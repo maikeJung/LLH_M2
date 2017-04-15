@@ -37,8 +37,8 @@ double LL_time_spectrum_shifted(double t, double E, double mass2, double dist){
         /* spectrum not defined below 0 - there are no events before time 0 and after 10s*/
         return 0.0;
     }
-    if (time >= TMAX-0.001){
-        time = TMAX-0.001;
+    if (time >= 9.9){
+        time = 9.9;
     }
     return LL_time_spectrum(time);
 }
@@ -78,13 +78,10 @@ void firstHitDistWeightedArrivalTimeDist(double *arrivalTimeDist, double *cumula
 void ProbFirstHitDist (double mass2, double dist, double events, double *result){
     /*arrival time distribution of all the hits (for a certain mass2) - project the E,t spectrum
     on the t axis*/
-
-    /*this array needs to be in log space*/
     double totalArrivalTimeDist[REST];
     int i;
     double sum;
     double y, e;
-    /*go over i in log coordinates*/
     for (i = 0; i < REST; i++){
         /* set the sum to zero for each time bin */
         sum = 0.0;
@@ -126,7 +123,6 @@ and newSpec[1.3*REST-1] to 10s*/
 void correlation(double mass2, double dist, double events, double *newSpec){
     double hitDist[REST];
     ProbFirstHitDist(mass2, dist, events, hitDist);
-    /*then the hitDist array will be in log space*/
     convolveHitDistWithLLTimeSpec(hitDist, newSpec);
 }
 
@@ -250,9 +246,8 @@ void addNoise(double *spectrum, double noise){
 }
 
 
-void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events, double *logTime){
+void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events){
     /*get trigger efficiencies as function of energy*/
-    printf("log test %f", logTime[1]);
     double triggerEffs[601];
     fillTriggerEff(triggerEffs, useTriggerEff);
     //create a file from the triggerEff for debugging

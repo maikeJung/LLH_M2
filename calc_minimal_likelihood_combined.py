@@ -11,7 +11,7 @@ import os
 
 def llh(massi2):
     # calculate LLH
-    test = spectrum.getLLH( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise)
+    test = spectrum.getLLH( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise, logTime)
     #print massi2, test
     return test
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     
     #TODO also import? also parse noise?
     RESE = 600
-    REST = 1000
+    REST = 100
     noise = pow(10,-3)*(10.0/REST)
     noise_events = 0.01
 
@@ -68,12 +68,18 @@ if __name__ == "__main__":
     #neutrinoEvents = np.random.poisson(events)
     #noiseEvents = np.random.poisson(noise_events)
     #events = neutrinoEvents + noiseEvents
-
+    
+    # create array with log times
+    pylogTime = np.logspace(-5.0,1.0,num=REST)
+    logTime = spectrum.doubleArray(REST)
+    for i in range(len(pylogTime)):
+        logTime[i] = pylogTime[i]
+    print logTime[0], logTime[1], logTime[99]
 
     # create spectrum from which the events are drawn
     # TODO: draw number of events from Poisson distribution - probably needs to be created for every event
     spectrumGen = spectrum.doubleArray( (RESE - 1) * REST )
-    spectrum.createSpectrum(spectrumGen, mass2, distance, events, useEnergyRes, useTriggerEff, noise, noise_events);
+    spectrum.createSpectrum(spectrumGen, mass2, distance, events, useEnergyRes, useTriggerEff, noise, noise_events, logTime);
 
     # arrays in which the pseudo experiments (their time and energy) will be stored
     eventEnergy = spectrum.intArray(int(events))
