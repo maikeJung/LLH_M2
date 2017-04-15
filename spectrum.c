@@ -75,7 +75,7 @@ void firstHitDistWeightedArrivalTimeDist(double *arrivalTimeDist, double *cumula
 }
 
 /* calculate the probability to get the first hit after a certain amount of time */
-void ProbFirstHitDist (double mass2, double dist, double events, double *result){
+void ProbFirstHitDist (double mass2, double dist, double events, double *result, double *logTime){
     /*arrival time distribution of all the hits (for a certain mass2) - project the E,t spectrum
     on the t axis*/
 
@@ -84,7 +84,7 @@ void ProbFirstHitDist (double mass2, double dist, double events, double *result)
     int i;
     double sum;
     double y, e;
-    /*go over i in log coordinates*/
+    /*go over i in log coordinates or choose proper entry from log array*/
     for (i = 0; i < REST; i++){
         /* set the sum to zero for each time bin */
         sum = 0.0;
@@ -93,7 +93,8 @@ void ProbFirstHitDist (double mass2, double dist, double events, double *result)
         product of time and energy PDF ("LLSpectrumTotal"), continually 
         incrementing the sum*/
         for (e = 0.01; e < EMAX; e += 0.01) {
-            y = LLSpectrumTotal(i*STEPT, e, mass2, dist);
+            y = LLSpectrumTotal(logTime[i], e, mass2, dist);
+            //y = LLSpectrumTotal(i*STEPT, e, mass2, dist);
             sum += y * 0.01;
         }
         totalArrivalTimeDist[i] = sum*STEPT;
@@ -108,7 +109,7 @@ void ProbFirstHitDist (double mass2, double dist, double events, double *result)
 void convolveHitDistWithLLTimeSpec(double *hitDist, double *convolSpec){
     int i, j;
     double pNew;
-    /*perform the convolution*/
+    /*perform the convolution TODO log conv?*/
     for (i = 0; i < REST*1.3; i++){
         pNew = 0.0;
         for (j = 0; j < REST; j++){
@@ -123,9 +124,9 @@ void convolveHitDistWithLLTimeSpec(double *hitDist, double *convolSpec){
 /*calculate the correlation - new spectrum between -3 and 10s*/
 /*this is stored in an array so newSpec[0] corresponds to a time of -3s 
 and newSpec[1.3*REST-1] to 10s*/
-void correlation(double mass2, double dist, double events, double *newSpec){
+void correlation(double mass2, double dist, double events, double *newSpec, double *logTime){
     double hitDist[REST];
-    ProbFirstHitDist(mass2, dist, events, hitDist);
+    ProbFirstHitDist(mass2, dist, events, hitDist,logTime);
     /*then the hitDist array will be in log space*/
     convolveHitDistWithLLTimeSpec(hitDist, newSpec);
 }
@@ -189,9 +190,9 @@ void normalize(double *distribution){
 }
 
 /*generate the proper distribution*/
-void generateDist(double mass2, double dist, double events, double *distribution, double *triggerEffs, bool useEnergyRes){
+void generateDist(double mass2, double dist, double events, double *distribution, double *triggerEffs, bool useEnergyRes, double *logTime){
 	double timeArray[(int) (1.3*REST)];
-	correlation(mass2, dist, events, timeArray);
+	correlation(mass2, dist, events, timeArray, logTime);
 	getEnergySpec(mass2, dist, timeArray, distribution, triggerEffs, useEnergyRes);
 	normalize(distribution);
 }
@@ -252,7 +253,6 @@ void addNoise(double *spectrum, double noise){
 
 void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events, double *logTime){
     /*get trigger efficiencies as function of energy*/
-    printf("log test %f", logTime[1]);
     double triggerEffs[601];
     fillTriggerEff(triggerEffs, useTriggerEff);
     //create a file from the triggerEff for debugging
@@ -267,7 +267,7 @@ void createSpectrum(double *spectrum, double mass2, double distance, double even
 
 
     /*create the spectrum from which the random events are drawn*/
-    generateDist(mass2, distance, events, spectrum, triggerEffs, useEnergyRes);
+    generateDist(mass2, distance, events, spectrum, triggerEffs, useEnergyRes, logTime);
     /*add noise - constant or expomential*/
     addNoise(spectrum, noise);
     //addExpNoise(spectrum, noise, events, noise_events);

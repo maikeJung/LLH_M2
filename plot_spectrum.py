@@ -12,7 +12,7 @@ from matplotlib.colors import LogNorm
 from scipy import interpolate
 
 # set grid size - must match those defined in spectrum.h
-REST = 1000
+REST = 100
 RESE = 600
 EMAX = 60.0
 TMAX = 10.0
@@ -28,7 +28,7 @@ STEPT = TMAX/REST
 #    times.append(drawnEvents[j][0])
 
 # set plot parameters
-mass = 0.5
+mass = 2.5
 distance = 0.5
 events = 650
 noise_events = 0.0
@@ -41,7 +41,12 @@ noise = pow(10,-3)*STEPT
 # create spectrum
 spectrum_plot = spectrum.doubleArray( (RESE - 1) * REST )
 # INPUT: array, mass, distance, #of events, bool energyRes, bool triggerEff, noise
-spectrum.createSpectrum(spectrum_plot ,mass ,distance ,events ,energyRes , triggerEff ,noise, noise_events)
+
+pylogTime = np.logspace(-5.0,1.0,num=REST)
+logTime = spectrum.doubleArray(REST)
+for i in range(len(pylogTime)):
+    logTime[i] = pylogTime[i]
+spectrum.createSpectrum(spectrum_plot ,mass ,distance ,events ,energyRes , triggerEff ,noise, noise_events, logTime)
 
 timeArray = range(0, REST, 1)
 energyArray = range(0, RESE-1)
