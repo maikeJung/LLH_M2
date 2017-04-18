@@ -93,11 +93,12 @@ void ProbFirstHitDist (double mass2, double dist, double events, double *result,
         product of time and energy PDF ("LLSpectrumTotal"), continually 
         incrementing the sum*/
         for (e = 0.01; e < EMAX; e += 0.01) {
-            y = LLSpectrumTotal(logTime[i], e, mass2, dist);
+            y = LLSpectrumTotal((logTime[i]+logTime[i+1])/2.0, e, mass2, dist);
             //y = LLSpectrumTotal(i*STEPT, e, mass2, dist);
             sum += y * 0.01;
         }
-        totalArrivalTimeDist[i] = sum*STEPT;
+        totalArrivalTimeDist[i] = sum*(logTime[i+1]-logTime[i]);
+        //totalArrivalTimeDist[i] = sum*STEPT;
     }
 
     double cumulative[REST];
@@ -109,7 +110,7 @@ void ProbFirstHitDist (double mass2, double dist, double events, double *result,
 void convolveHitDistWithLLTimeSpec(double *hitDist, double *convolSpec){
     int i, j;
     double pNew;
-    /*perform the convolution TODO log conv?*/
+    /*perform the convolution*/
     for (i = 0; i < REST*1.3; i++){
         pNew = 0.0;
         for (j = 0; j < REST; j++){
@@ -121,14 +122,37 @@ void convolveHitDistWithLLTimeSpec(double *hitDist, double *convolSpec){
     }
 }
 
+void convolveHitDistWithLLTimeSpecLog(double *hitDist, double *convolSpec, double *logTime, double *logTimeConv){
+    int i, j;
+    double t, a, da;
+    double pNew;
+    /*perform the convolution on log array*/
+    for (i = 0; i < REST*1.3; i++){
+        t = (logTimeConv[i]+logTimeConv[i+1])/2.0; // calculate the proper time
+        pNew = 0.0;
+        for (j = 0; j < REST; j++){
+            a = (logTime[j]+logTime[j+1])/2.0;
+            da = (logTime[j+1]-logTime[j]);
+            //if ((t/a) < 10.0 && (t/a) > 0){
+            //    pNew += hitDist[j] * LL_time_spectrum( t/a ) * da/a;
+            //}
+            if ((t+a) < 10.0 && (t+a) > 0){
+                pNew += hitDist[j] * LL_time_spectrum( t + a ) * da;
+            }
+        }
+        convolSpec[i] = pNew;
+    }
+}
+
 /*calculate the correlation - new spectrum between -3 and 10s*/
 /*this is stored in an array so newSpec[0] corresponds to a time of -3s 
 and newSpec[1.3*REST-1] to 10s*/
-void correlation(double mass2, double dist, double events, double *newSpec, double *logTime){
+void correlation(double mass2, double dist, double events, double *newSpec, double *logTime, double *logTimeConv){
     double hitDist[REST];
     ProbFirstHitDist(mass2, dist, events, hitDist,logTime);
     /*then the hitDist array will be in log space*/
-    convolveHitDistWithLLTimeSpec(hitDist, newSpec);
+    convolveHitDistWithLLTimeSpecLog(hitDist, newSpec, logTime, logTimeConv);
+    //convolveHitDistWithLLTimeSpec(hitDist, newSpec);
 }
 
 
@@ -147,7 +171,26 @@ void applyEnergyRes(int t, double *distribution, double *energySpectrum){
     }
 }
 
-void getEnergySpec(double mass2, double dist, double *timeArray, double *distribution, double *triggerEffs, bool useEnergyRes){
+int getArrayIndex(double time, double *logTimeConv){
+    //determine index of the convoluted time array
+    int index = 0;
+    if (time > 9.999){
+        index = (int) 1.3*REST;
+    }
+    if (time < -2.9){
+        index = 0;
+    }
+    int i;
+    for (i=0;i<1.3*REST;i++){
+        if(time < logTimeConv[i]){
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+void getEnergySpec(double mass2, double dist, double *timeArray, double *distribution, double *triggerEffs, bool useEnergyRes, double *logTimeConv){
 	double time, pUnsmeared;
 	int t, e, arrayIndex;
 
@@ -156,13 +199,8 @@ void getEnergySpec(double mass2, double dist, double *timeArray, double *distrib
         energySpectrum[0] = 0.0;
         for (e=1; e<RESE; e++){
             time = getTimeDelay(t*STEPT, e*STEPE, mass2, dist);
-            arrayIndex = (int) (time/(STEPT) + 0.3*REST);
-            if (arrayIndex <= 0){
-                arrayIndex = 0;
-            }
-            if (arrayIndex >= 1.3*REST){
-                arrayIndex = (int) 1.3*REST;
-            }
+            arrayIndex = getArrayIndex(time, logTimeConv);
+            //arrayIndex = (int) (time/(STEPT) + 0.3*REST);
             pUnsmeared = LL_energy_spectrum(e*STEPE)*timeArray[arrayIndex]*triggerEffs[(int) (e*STEPE*10)];
             if (!useEnergyRes){
                 distribution[t*(RESE-1) +e-1] = pUnsmeared;
@@ -190,10 +228,11 @@ void normalize(double *distribution){
 }
 
 /*generate the proper distribution*/
-void generateDist(double mass2, double dist, double events, double *distribution, double *triggerEffs, bool useEnergyRes, double *logTime){
+void generateDist(double mass2, double dist, double events, double *distribution, double *triggerEffs, bool useEnergyRes, double *logTime, double *logTimeConv){
 	double timeArray[(int) (1.3*REST)];
-	correlation(mass2, dist, events, timeArray, logTime);
-	getEnergySpec(mass2, dist, timeArray, distribution, triggerEffs, useEnergyRes);
+	//correlation(mass2, dist, events, timeArray, logTime);
+    correlation(mass2, dist, events, timeArray, logTime, logTimeConv);
+	getEnergySpec(mass2, dist, timeArray, distribution, triggerEffs, useEnergyRes, logTimeConv);
 	normalize(distribution);
 }
 
@@ -250,8 +289,17 @@ void addNoise(double *spectrum, double noise){
     }
 }
 
+void addNoiseLog(double *spectrum, double noise, double *logTime){
+    // add constant noise floor to the spectrum - proper amount depending on size of bin
+    int t, e;
+    for(t = 0; t < REST; t++){
+        for(e = 1; e < RESE; e++){
+            spectrum[t*(RESE-1) +e-1] += noise*(logTime[t+1]-logTime[t]);
+        }
+    }
+}
 
-void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events, double *logTime){
+void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events, double *logTime, double *logTimeConv){
     /*get trigger efficiencies as function of energy*/
     double triggerEffs[601];
     fillTriggerEff(triggerEffs, useTriggerEff);
@@ -267,9 +315,10 @@ void createSpectrum(double *spectrum, double mass2, double distance, double even
 
 
     /*create the spectrum from which the random events are drawn*/
-    generateDist(mass2, distance, events, spectrum, triggerEffs, useEnergyRes, logTime);
+    generateDist(mass2, distance, events, spectrum, triggerEffs, useEnergyRes, logTime, logTimeConv);
     /*add noise - constant or expomential*/
-    addNoise(spectrum, noise);
+    addNoiseLog(spectrum, noise, logTime);
+    //addNoise(spectrum, noise);
     //addExpNoise(spectrum, noise, events, noise_events);
     //normalize(spectrum);
 }

@@ -28,15 +28,15 @@ STEPT = TMAX/REST
 #    times.append(drawnEvents[j][0])
 
 # set plot parameters
-mass = 2.5
-distance = 0.5
-events = 650
+mass = 1.0
+distance = 1.0
+events = 160
 noise_events = 0.0
 energyRes = True
 triggerEff = True
 #noise = 0.002
-noise = pow(10,-3)*STEPT
-#noise = 0.0
+#noise = pow(10,-3)*STEPT
+noise = pow(10,-3)*10.0
 
 # create spectrum
 spectrum_plot = spectrum.doubleArray( (RESE - 1) * REST )
@@ -46,7 +46,15 @@ pylogTime = np.logspace(-5.0,1.0,num=REST)
 logTime = spectrum.doubleArray(REST)
 for i in range(len(pylogTime)):
     logTime[i] = pylogTime[i]
-spectrum.createSpectrum(spectrum_plot ,mass ,distance ,events ,energyRes , triggerEff ,noise, noise_events, logTime)
+# create a 2nd array with log times for the time convolution
+pylogTime2 = np.logspace(0.48,-5.0,num=(0.3*REST))
+pylogTime2 *= -1
+pylogTimeConv = np.concatenate((pylogTime2, [0], pylogTime))
+logTimeConv = spectrum.doubleArray(int(1.3*REST)+2)
+for i in range(len(pylogTimeConv)):
+    logTimeConv[i] = pylogTimeConv[i]
+
+spectrum.createSpectrum(spectrum_plot ,mass ,distance ,events ,energyRes , triggerEff ,noise, noise_events, logTime, logTimeConv)
 
 timeArray = range(0, REST, 1)
 energyArray = range(0, RESE-1)
@@ -64,7 +72,7 @@ X, Y = np.meshgrid(tint, eint)
 
 Z = myArray
 
-
+print Z
 
 '''
 #Interpolate
@@ -118,9 +126,9 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 plt.gcf().subplots_adjust(bottom=0.15)
 plt.gcf().subplots_adjust(top=0.87)
-surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
+#surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
 #plt.plot(times,energies, 'ro')
-#surf = ax.contourf(X,Y,Z,levels=[1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],cmap=plt.cm.jet,norm = LogNorm())
+surf = ax.contourf(X,Y,Z,levels=[0.0, 0.008, 0.016, 0.024, 0.032, 0.040, 0.048, 0.056, 0.0646, 0.072],cmap=plt.cm.jet)
 #surf = ax.contourf(X,Y,Z,cmap=plt.cm.jet,norm = LogNorm())
 ax.set_xlabel('detection time [s]', fontsize=19)
 ax.set_ylabel('energy [MeV]', fontsize=19)

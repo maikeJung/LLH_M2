@@ -11,7 +11,7 @@ import os
 
 def llh(massi2):
     # calculate LLH
-    test = spectrum.getLLH( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise, logTime)
+    test = spectrum.getLLH( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise, logTime, logTimeConv)
     #print massi2, test
     return test
 
@@ -56,8 +56,9 @@ if __name__ == "__main__":
     
     #TODO also import? also parse noise?
     RESE = 600
-    REST = 100
-    noise = pow(10,-3)*(10.0/REST)
+    REST = 1000
+    #noise = pow(10,-3)*(10.0/REST)
+    noise = pow(10,-3)*(10.0)
     noise_events = 0.01
 
     mass2 = args.mass2; distance = args.distance; events = args.nevents; nfits = args.nfits
@@ -70,17 +71,30 @@ if __name__ == "__main__":
     #events = neutrinoEvents + noiseEvents
     
     # create array with log times
-    pylogTime = np.logspace(-5.0,1.0,num=REST)
-    logTime = spectrum.doubleArray(REST)
+    pylogTime = np.logspace(-5.0,1.0,num=(REST+1))
+    logTime = spectrum.doubleArray(REST+1)
     for i in range(len(pylogTime)):
         logTime[i] = pylogTime[i]
-    print logTime[0], logTime[1], logTime[99]
+    #print logTime[0], logTime[1], logTime[99], logTime[100]
+
+    # create a 2nd array with log times for the time convolution
+    pylogTime2 = np.logspace(0.48,-5.0,num=(0.3*REST))
+    pylogTime2 *= -1
+    pylogTimeConv = np.concatenate((pylogTime2, [0], pylogTime))
+    logTimeConv = spectrum.doubleArray(int(1.3*REST)+2)
+    for i in range(len(pylogTimeConv)):
+        logTimeConv[i] = pylogTimeConv[i]
+    #print logTimeConv[45]
 
     # create spectrum from which the events are drawn
     # TODO: draw number of events from Poisson distribution - probably needs to be created for every event
     spectrumGen = spectrum.doubleArray( (RESE - 1) * REST )
-    spectrum.createSpectrum(spectrumGen, mass2, distance, events, useEnergyRes, useTriggerEff, noise, noise_events, logTime);
+    spectrum.createSpectrum(spectrumGen, mass2, distance, events, useEnergyRes, useTriggerEff, noise, noise_events, logTime, logTimeConv);
+    #for t in range(0,REST):
+    #    for e in range(1,RESE):
+    #        print t,e, spectrumGen[t*(RESE-1) +e-1]
 
+    #exit();
     # arrays in which the pseudo experiments (their time and energy) will be stored
     eventEnergy = spectrum.intArray(int(events))
     eventTime = spectrum.intArray(int(events))
@@ -96,7 +110,7 @@ if __name__ == "__main__":
     masses = []
     for i in range(nfits):
         # create one event
-        spectrum.createEventsArray(events, spectrumGen, maxSpectrum, eventTime, eventEnergy,i)
+        spectrum.createEventsArray(events, spectrumGen, maxSpectrum, eventTime, eventEnergy,i, logTime)
         # find the mass for which the likelihood is minimal and store it
         x_min = minimize_scalar(llh, bounds=(-2.0,5.0), method='bounded', options={'disp':1,'xatol':0.005})
         print i, x_min.nfev, x_min.x

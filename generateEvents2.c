@@ -21,7 +21,27 @@ BINNING: defined in header-file (spectrum.h)
 #include <sys/stat.h>
 #include <errno.h>
 
-void createEventsArray(double events, double *spectrum, double max, int *timeArray, int *energyArray, int filenumber){
+
+int getArrayIndexE(double time, double *logTime){
+    //determine index of the convoluted time array
+    int index = 0;
+    if (time > 9.5){
+        index = REST;
+    }
+    if (time <= 0){
+        index = 0;
+    }
+    int i;
+    for (i=0;i<REST;i++){
+        if(time < logTime[i]){
+            index = i;
+            break;
+        }
+    }
+    return index;
+}
+
+void createEventsArray(double events, double *spectrum, double max, int *timeArray, int *energyArray, int filenumber, double *logTime){
 
     /*creates events and writes them in a time and energy array*/
     /* - to store Data
@@ -35,14 +55,20 @@ void createEventsArray(double events, double *spectrum, double max, int *timeArr
 
     int eventsGenerated = 0;
     int randE, randT;
+    double randTtest;
     double randCheck;
     while(eventsGenerated < events){
         randE = rand() % (RESE-1);
         randT = rand() % (REST);
+        //randTtest = (double)rand()/(double)(RAND_MAX/9.9);
+        //randT = getArrayIndexE(randTtest, logTime);
+        
+        //printf("%f %d\n", randTtest, randT);
         randCheck = rand()*max/RAND_MAX;
+        
         //printf("events %d %d %f \n", randE, randT, max);
         if (spectrum[randT*(RESE-1)+randE] >= randCheck){
-            //printf("found\n");
+            //printf("found %f %d\n", randTtest, randT);
             timeArray[eventsGenerated] = randT;
             energyArray[eventsGenerated] = randE;
             //fprintf(f, "%d %d\n", randE, randT);

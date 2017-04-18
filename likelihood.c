@@ -36,14 +36,14 @@ void getEvent(int *eventEnergy, int *eventTime, double mass2, double distance, d
     }
 }
 ///function that calculates likelihood - and will then be minimized in python
-double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events){
+double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv){
 
     double llh = 0.0;
     int i;
     user_data_t spectrum[(RESE-1)*REST];
 
 	//double *spectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
-    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, noise_events);
+    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
     for (i = 0; i < events; i++){
         if (spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
             llh += -10000000;   
@@ -57,80 +57,7 @@ double getLLH(double mass2, double distance, double events, bool triggEff, bool 
 }
 
 
-// method that scans over range
-void calcLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, int filenumber, double noise, double noise_events){
-   
-    /*load events & store energy and time in arrays*/
-    int eventEnergy[(int) events];
-    int eventTime[(int) events];
-    getEvent(eventEnergy, eventTime, mass2, distance, events, filenumber, noise);
 
-    // calculate the likelihood
-    int i;
-    double llh;
-    double testmass2;
-    // store current value of the minimumLLH and the corresponding mass2
-    double minLLH = INFINITY;
-    double mass2OfMinLLH = 0.0;
-    // go over all the spectra around a certain range of the input mass2 & calculate the likelihood for each spectrum
-    double *testSpectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
-    // first go over broad range - there are no negative entries in the spectrum!!!!!
-    for (testmass2 = mass2 - 0.5; testmass2 <= mass2 + 0.5; testmass2+=0.1){
-        llh = 0.0;
-        createSpectrum(testSpectrum, testmass2, distance, events, energyRes, triggEff, noise, noise_events);
-        for (i = 0; i < events; i++){
-            if (testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
-                llh += -10000000;   
-            }
-            else llh += log(testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]]);
-            //printf("tset %d %f \n", i, llh);
-        }
-        llh*=-1;
-        printf("mass2 %f, llh %f\n",testmass2, llh);
-        if (llh < minLLH) {
-            minLLH = llh;
-            mass2OfMinLLH = testmass2;
-        }
-    }
-    double currentMinimum = mass2OfMinLLH;
-
-    // check around the minimum mass2 in finer steps
-    for (testmass2 = currentMinimum - 0.05; testmass2 <= currentMinimum + 0.05; testmass2 += 0.01){
-        if(testmass2 >= 0.0){
-            llh = 0.0;
-            createSpectrum(testSpectrum, testmass2, distance, events, energyRes, triggEff, noise, noise_events);
-            for (i = 0; i < events; i++){
-                if (testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
-                    llh += -10000000;   
-                }
-                else llh += log(testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]]);
-                //printf("tset %d %f \n", i, llh);
-            }
-            llh*=-1;
-            printf("mass2 %f, llh %f \n",testmass2, llh);
-            if (llh < minLLH) {
-                minLLH = llh;
-                mass2OfMinLLH = testmass2;
-            }
-        }
-    }
-
-    printf("mass2 found: %f eV\n", mass2OfMinLLH);
-
-    free(testSpectrum);
-
-    /*write to file*/
-    char filename2[sizeof "Results_Likelihood/test_mass2es_1.55eV_1Mpc_real.txt"];
-    if (triggEff && energyRes){
-        sprintf(filename2, "TEST_mass2es_%.2feV_%.1fMpc_real_1.txt", mass2, distance);
-    }
-    else {
-        sprintf(filename2, "Results_Likelihood/mass2es_%.2feV_%.1fMpc_ideal_test3.txt", mass2, distance);
-    }
-    FILE *g = fopen(filename2, "a+");
-    fprintf(g, "%f \n", mass2OfMinLLH);
-    fclose(g);
-}
 
 int main(void){
 	/*set parameters*/
