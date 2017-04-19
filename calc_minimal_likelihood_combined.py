@@ -12,6 +12,7 @@ import os
 def llh(massi2):
     # calculate LLH
     test = spectrum.getLLH( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise, logTime, logTimeConv)
+    #test = spectrum.getLLHLogBins( float(massi2), distance, events, useTriggerEff, useEnergyRes, noise, eventTime, eventEnergy, noise, logTime, logTimeConv, spectrumGen)
     #print massi2, test
     return test
 
@@ -58,8 +59,10 @@ if __name__ == "__main__":
     RESE = 600
     REST = 1000
     #noise = pow(10,-3)*(10.0/REST)
-    noise = pow(10,-3)*(10.0)
+    noise = pow(10,-3)
     noise_events = 0.01
+
+    print datetime.now()
 
     mass2 = args.mass2; distance = args.distance; events = args.nevents; nfits = args.nfits
     useTriggerEff = args.triggEff; useEnergyRes = args.energyRes
@@ -117,7 +120,8 @@ if __name__ == "__main__":
         masses.append(x_min.x)
         with open("DATA/masses_"+str(distance)+"Mpc_"+str(events)+"Events_"+str(mass2)+"eV_"+str(noise_events)+"noiseEvents_"+str(noise)+"Noise_test.txt", "a") as myfile:
             myfile.write(str(x_min.x) + '\n')
-
+    
+        print datetime.now()
     # calculate 1 sigma uncertainty and store
     lower, value, upper = calcError(masses)
 

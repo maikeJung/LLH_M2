@@ -53,10 +53,33 @@ double getLLH(double mass2, double distance, double events, bool triggEff, bool 
         else llh += log(spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]]);
     }
     llh*=-1;
+    printf("mass llh %f %f \n", mass2, llh);
     return llh;
 }
 
+double getLLHLogBins(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv, double *spectrumGen){
 
+    double llh = 0.0;
+    int i;
+    user_data_t spectrum[(RESE-1)*REST];
+
+	//double *spectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
+    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
+    for (i = 0; i < events; i++){
+        if (spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){   
+            printf("event number %d e %d t %d\n",i, eventEnergy[i], eventTime[i]);
+            printf("value of test spectrum very small - check \n");
+        }
+        if (spectrumGen[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){   
+            printf("event number %d e %d t %d\n",i, eventEnergy[i], eventTime[i]);
+            printf("value of original spectrum very small - check \n");
+        }
+        llh += events*spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] - log(spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]]*events);
+    }
+    //llh*=-1;
+    printf("llh %f %f\n",mass2, llh);
+    return llh;
+}
 
 
 int main(void){

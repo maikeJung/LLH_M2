@@ -38,6 +38,8 @@ void createSpectrum(double *spectrum, double mass2, double distance, double even
 void getEvent(int *eventEnergy, int *eventTime, double mass2, double distance, double events, int filenumber, double noise);
 double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv);
 
+double getLLHLogBins(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv, double *spectrumGen);
+
 void createEventsArray(double events, double *spectrum, double max, int *timeArray, int *energyArray, int filenumber, double *logTime);
 void getSeed(double distance, double mass2, double events, double noise);
 double findSpectrumMax(double *spectrum);

@@ -44,9 +44,9 @@ int getArrayIndexE(double time, double *logTime){
 void createEventsArray(double events, double *spectrum, double max, int *timeArray, int *energyArray, int filenumber, double *logTime){
 
     /*creates events and writes them in a time and energy array*/
-    /* - to store Data
-    char filename[sizeof "DATA/DATA_MOGON_TEST/Events500kpc_100meV/event1111.txt"];
-    sprintf(filename, "DATA/DATA_MOGON_TEST/Events500kpc_100meV/event%d.txt", filenumber);
+    /* - to store Data 
+    char filename[sizeof "DATA/Events/event_log_1111.txt"];
+    sprintf(filename, "DATA/Events/event_log_%d.txt", filenumber);
     FILE *f = fopen(filename, "w");
     if (f == NULL){
         printf("Error opening file!\n");
@@ -60,7 +60,7 @@ void createEventsArray(double events, double *spectrum, double max, int *timeArr
     while(eventsGenerated < events){
         randE = rand() % (RESE-1);
         randT = rand() % (REST);
-        //randTtest = (double)rand()/(double)(RAND_MAX/9.9);
+        //randTtest = (double)rand()/(double)(RAND_MAX/6.0);
         //randT = getArrayIndexE(randTtest, logTime);
         
         //printf("%f %d\n", randTtest, randT);
