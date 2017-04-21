@@ -81,25 +81,58 @@ double getLLHLogBins(double mass2, double distance, double events, bool triggEff
     return llh;
 }
 
+// method that scans over range
+void calcLLH(double mass, double distance, double events, bool triggEff, bool energyRes, int filenumber, double noise, double noise_events, double *logTime, double *logTimeConv, int *eventEnergy, int *eventTime){
 
-int main(void){
-	/*set parameters*/
-    /*flag for trigger efficiency*/
-    bool triggEff = true;
-    bool energyRes = true;
-    double mass2 = 1.0;
-    double distance = 1.0;
-    double events = 160;  
-    double noise_events = 0.01;  
-    int filenumber;
-    double noise = pow(10,-5);
+    //write to file for a test
+    char filename[sizeof "DATA_THESIS/results_1.00eV_1.00Mpc_156Events_10.txt"];
+    sprintf(filename, "DATA_THESIS/results_%.2feV_%.2fMpc_%.0fEvents_%d.txt",mass, distance, events, filenumber);   
+    FILE *f = fopen(filename, "a+");
 
-    /*calculate uncertainty for certain configuration*/
-    for (filenumber=1; filenumber<1; filenumber++){ 
-        printf("evaluating file %d \n", filenumber);
-        calcLLH(mass2, distance, events, triggEff, energyRes, filenumber, noise, noise_events);
+    // calculate the likelihood
+    int i;
+    double llh;
+    double testMass;
+    // store current value of the minimumLLH and the corresponding mass
+    double minLLH = INFINITY;
+    double massOfMinLLH = 0.0;
+    // go over all the spectra around a certain range of the input mass & calculate the likelihood for each spectrum
+    double *testSpectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
+    // first go over broad range - there are no negative entries in the spectrum!!!!!
+    //for (testMass = mass - 0.5; testMass <= mass + 0.5; testMass+=0.1){
+    for (testMass = 0.0; testMass <= 1.01; testMass+=0.05){
+        llh = 0.0;
+        createSpectrum(testSpectrum, testMass, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
+        for (i = 0; i < events; i++){
+            if (testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
+                llh += -10000000;   
+            }
+            else llh += log(testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]]);
+            //printf("tset %d %f \n", i, llh);
+        }
+        llh*=-1;
+        printf("mass %f, llh %f\n",testMass, llh);
+        fprintf(f, "%f %f\n", testMass, llh);
+        if (llh < minLLH) {
+            minLLH = llh;
+            massOfMinLLH = testMass;
+        }
     }
 
-    printf("DONE\n");
-    return 0;
+    fclose(f);
+    printf("mass found: %f eV\n", massOfMinLLH);
+
+    free(testSpectrum);
+
+    /*write to file*/
+    char filename2[sizeof "Results_Likelihood/test_masses_1.55eV_1Mpc_real.txt"];
+    if (triggEff && energyRes){
+        sprintf(filename2, "TEST_masses_%.2feV_%.1fMpc_real_1.txt", mass, distance);
+    }
+    else {
+        sprintf(filename2, "Results_Likelihood/masses_%.2feV_%.1fMpc_ideal_test3.txt", mass, distance);
+    }
+    FILE *g = fopen(filename2, "a+");
+    fprintf(g, "%f \n", massOfMinLLH);
+    fclose(g);
 }

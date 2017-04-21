@@ -108,12 +108,18 @@ if __name__ == "__main__":
     # set seed for random number generator - and store it
     spectrum.getSeed(distance, mass2, events, noise)
 
+    # scan over mass range:
+    for i in range(10):
+        spectrum.createEventsArray(events, spectrumGen, maxSpectrum, eventTime, eventEnergy,i, logTime)
+        spectrum.calcLLH(mass2, distance, events, useTriggerEff, useEnergyRes, i, noise, noise_events, logTime, logTimeConv, eventEnergy, eventTime);
+
     if not os.path.exists('DATA'):
         os.makedirs('DATA')
     masses = []
     for i in range(nfits):
         # create one event
         spectrum.createEventsArray(events, spectrumGen, maxSpectrum, eventTime, eventEnergy,i, logTime)
+
         # find the mass for which the likelihood is minimal and store it
         x_min = minimize_scalar(llh, bounds=(-2.0,5.0), method='bounded', options={'disp':1,'xatol':0.005})
         print i, x_min.nfev, x_min.x
