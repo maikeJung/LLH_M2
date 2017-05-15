@@ -36,14 +36,14 @@ void getEvent(int *eventEnergy, int *eventTime, double mass2, double distance, d
     }
 }
 ///function that calculates likelihood - and will then be minimized in python
-double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv){
+double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double *logTime, double *logTimeConv){
 
     double llh = 0.0;
     int i;
     user_data_t spectrum[(RESE-1)*REST];
 
 	//double *spectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
-    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
+    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, logTime, logTimeConv);
     for (i = 0; i < events; i++){
         if (spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
             llh += -10000000;   
@@ -57,14 +57,14 @@ double getLLH(double mass2, double distance, double events, bool triggEff, bool 
     return llh;
 }
 
-double getLLHLogBins(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double noise_events, double *logTime, double *logTimeConv, double *spectrumGen){
+double getLLHLogBins(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double *logTime, double *logTimeConv, double *spectrumGen){
 
     double llh = 0.0;
     int i;
     user_data_t spectrum[(RESE-1)*REST];
 
 	//double *spectrum= (double*) malloc((RESE-1) * REST * sizeof(double));
-    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
+    createSpectrum(spectrum, mass2, distance, events, energyRes, triggEff, noise, logTime, logTimeConv);
     for (i = 0; i < events; i++){
         if (spectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){   
             printf("event number %d e %d t %d\n",i, eventEnergy[i], eventTime[i]);
@@ -82,7 +82,7 @@ double getLLHLogBins(double mass2, double distance, double events, bool triggEff
 }
 
 // method that scans over range
-void calcLLH(double mass, double distance, double events, bool triggEff, bool energyRes, int filenumber, double noise, double noise_events, double *logTime, double *logTimeConv, int *eventEnergy, int *eventTime){
+void calcLLH(double mass, double distance, double events, bool triggEff, bool energyRes, int filenumber, double noise, double *logTime, double *logTimeConv, int *eventEnergy, int *eventTime){
 
     //write to file for a test
     char filename[sizeof "DATA_THESIS/results_1.00eV_1.00Mpc_156Events_10.txt"];
@@ -102,7 +102,7 @@ void calcLLH(double mass, double distance, double events, bool triggEff, bool en
     //for (testMass = mass - 0.5; testMass <= mass + 0.5; testMass+=0.1){
     for (testMass = 0.0; testMass <= 1.01; testMass+=0.05){
         llh = 0.0;
-        createSpectrum(testSpectrum, testMass, distance, events, energyRes, triggEff, noise, noise_events, logTime, logTimeConv);
+        createSpectrum(testSpectrum, testMass, distance, events, energyRes, triggEff, noise, logTime, logTimeConv);
         for (i = 0; i < events; i++){
             if (testSpectrum[eventTime[i]*(RESE-1)+eventEnergy[i]] < pow(10,-200)){
                 llh += -10000000;   
