@@ -299,7 +299,7 @@ void addNoiseLog(double *spectrum, double noise, double *logTime){
     }
 }
 
-void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double noise_events, double *logTime, double *logTimeConv){
+void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double *logTime, double *logTimeConv){
     /*get trigger efficiencies as function of energy*/
     double triggerEffs[601];
     fillTriggerEff(triggerEffs, useTriggerEff);
