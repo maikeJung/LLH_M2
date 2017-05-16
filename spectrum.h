@@ -5,17 +5,12 @@
 
 /*define size of the grid*/
 #define RESE 600
-#define REST 100
+#define REST 1000
 #define EMAX 60.0
 #define TMAX 10.0
 #define STEPE EMAX/RESE
 #define STEPT TMAX/REST
 
-#ifdef USE_SP
-typedef float user_data_t;
-#else
-typedef double user_data_t;
-#endif
 
 /* normalized LL energy spectrum - 15.4: average energy, 3.8: betha, 4802: normalization factor*/
 #define LL_energy_spectrum(E) pow(E, 3.8)*exp(-(1.0+3.8)*E/15.4)/4802.516160
@@ -35,15 +30,10 @@ N is proportional to E -> N = 1/alpha*E -> N=alpha*E -> factor of alpha for sigm
 
 void createSpectrum(double *spectrum, double mass2, double distance, double events, bool useEnergyRes, bool useTriggerEff, double noise, double *logTime, double *logTimeConv);
 
-void getEvent(int *eventEnergy, int *eventTime, double mass2, double distance, double events, int filenumber, double noise);
 double getLLH(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double *logTime, double *logTimeConv);
-
-double getLLHLogBins(double mass2, double distance, double events, bool triggEff, bool energyRes, double noise, int *eventTime, int *eventEnergy, double *logTime, double *logTimeConv, double *spectrumGen);
 
 void createEventsArray(double events, double *spectrum, double max, int *timeArray, int *energyArray, int filenumber, double *logTime);
 void getSeed(double distance, double mass2, double events, double noise);
 double findSpectrumMax(double *spectrum);
-
-void calcLLH(double mass, double distance, double events, bool triggEff, bool energyRes, int filenumber, double noise, double *logTime, double *logTimeConv, int *eventEnergy, int *eventTime);
 
 #endif 

@@ -1,3 +1,19 @@
+'''
+*Author: Maike Jung
+*Date: 16.05.2017
+
+*Purpose: create events for a certain SN neutrino spectrum with a certain mass and then determine the most pobable mass of these events via the method of maximum likelihood
+
+SN - Model: Lawrence-Livermore
+
+UNITS: mass2: eV2
+       energy: MeV
+       distance: Mpc
+       time: s
+
+noise of the detector: 1mHz
+'''
+
 import spectrum
 
 from scipy.optimize import minimize_scalar
@@ -33,7 +49,7 @@ if __name__ == "__main__":
     useTriggerEff = args.triggEff; useEnergyRes = args.energyRes
     #RESE and REST need to be the same as in the header file!
     RESE = 600
-    REST = 100
+    REST = 1000
     #expected noise rate 1mHz
     noise = pow(10,-3)
     
