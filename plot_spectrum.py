@@ -12,35 +12,23 @@ from matplotlib.colors import LogNorm
 from scipy import interpolate
 
 # set grid size - must match those defined in spectrum.h
-REST = 100
+REST = 1000
 RESE = 600
 EMAX = 60.0
 TMAX = 10.0
 STEPE = EMAX/RESE
 STEPT = TMAX/REST
 
-# read in event file to plot ontop of the probability distribution
-#drawnEvents = np.loadtxt('DATA_CHECK_EVENTS/events1.0eV_1.0Mpc_100.txt')
-#energies = []
-#times = []
-#for j in range(160):
-#    energies.append(drawnEvents[j][1])
-#    times.append(drawnEvents[j][0])
-
 # set plot parameters
-mass = 1.0
+mass = 1.23
 distance = 1.0
 events = 160
-noise_events = 0.0
 energyRes = True
 triggerEff = True
-#noise = 0.002
-#noise = pow(10,-3)*STEPT
-noise = pow(10,-3)*10.0
+noise = pow(10,-3)
 
 # create spectrum
 spectrum_plot = spectrum.doubleArray( (RESE - 1) * REST )
-# INPUT: array, mass, distance, #of events, bool energyRes, bool triggerEff, noise
 
 pylogTime = np.logspace(-5.0,1.0,num=REST)
 logTime = spectrum.doubleArray(REST)
@@ -54,141 +42,38 @@ logTimeConv = spectrum.doubleArray(int(1.3*REST)+2)
 for i in range(len(pylogTimeConv)):
     logTimeConv[i] = pylogTimeConv[i]
 
-spectrum.createSpectrum(spectrum_plot ,mass ,distance ,events ,energyRes , triggerEff ,noise, noise_events, logTime, logTimeConv)
+spectrum.createSpectrum(spectrum_plot, mass, distance, events, energyRes, triggerEff, noise, logTime, logTimeConv)
 
+#create array for plot
 timeArray = range(0, REST, 1)
 energyArray = range(0, RESE-1)
-myArray = [[spectrum_plot[t*(RESE-1) +e] for t in timeArray] for e in energyArray]
-#myArray = [[spectrum_plot[t*(RESE-1) +e] for t in range(0, REST, 1)] for e in range(0, RESE-1)]
-#X = np.arange(0, TMAX, STEPT)
-#Y = np.arange(STEPE, EMAX-STEPE, STEPE)
-#Y = np.arange(0, EMAX-STEPE, STEPE)
+
+myArray = [[spectrum_plot[t*(RESE-1) +e] for t in range(0, REST, 1)] for e in range(0, RESE-1)]
 
 tint = [timeArray[i]*STEPT for i in timeArray]
 eint = [energyArray[i]*STEPE + STEPE for i in energyArray]
 
-#X, Y = np.meshgrid(X, Y)
 X, Y = np.meshgrid(tint, eint)
 
 Z = myArray
-
-print Z
-
-'''
-#Interpolate
-x1 = np.asarray(np.arange(0, TMAX, STEPT))
-y1 = np.asarray(np.arange(STEPE, EMAX-STEPE, STEPE))
-z1 = transpose(myArray)
-sp = interpolate.RectBivariateSpline(x1, y1, z1, kx=3, ky=3, s=0)
-
-print float(sp([0.6012], [0.25]))  # array([[ 7.3]])
-print sp([8.0],[12.1])  # array([[ 2.66427408]])
-
-#myArrayTest = [ [1]  for t in np.arrange(0, TMAX, REST)] for e in np.arrange(0, EMAX-RESE,RESE)]
-myArrayTEST = [[float(sp([t],[e])) for t in np.arange(0, TMAX, STEPT)] for e in np.arange(STEPE, EMAX-STEPE, STEPE)]
-'''
-'''
-diff = 0.0
-for t in range(0,REST):
-    for e in range(0, RESE-2):
-        diff += abs(Z[e][t] -  myArrayTEST[e][t])
-print diff
-'''
-
-# Surface Plot of the arrival distribution - log scale
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.gcf().subplots_adjust(bottom=0.15)
-plt.gcf().subplots_adjust(top=0.87)
-#surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
-surf = ax.contourf(X,Y,Z,levels=[1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],cmap=plt.cm.jet,norm = LogNorm())
-#plt.plot(times,energies, 'ro')
-#surf = ax.contourf(X,Y,Z,cmap=plt.cm.jet,norm = LogNorm())
-ax.set_xlabel('detection time [s]', fontsize=19)
-ax.set_ylabel('energy [MeV]', fontsize=19)
-#ax.set_title('m = '+str(M)+' eV - ' + str(events) + ' events - D = '+str(D)+ ' Mpc \n'+str(det_type), fontsize=19)
-ax.xaxis.set_tick_params(labelsize=19, width=2)
-ax.yaxis.set_tick_params(labelsize=19, width=2)
-ax.xaxis.set_minor_formatter(plt.FormatStrFormatter('%d'))
-# defining custom minor tick locations:
-ax.xaxis.set_minor_locator(plt.FixedLocator([50,500,2000]))
-ax.yaxis.set_ticks_position('left')
-ax.xaxis.set_ticks_position('bottom')
-ax.tick_params(axis='both',reset=False,which='both',length=8,width=2)
-cbar = fig.colorbar(surf, shrink=1, aspect=20, fraction=.12,pad=.02)
-cbar.set_label('probability',size=19)
-# access to cbar tick labels:
-cbar.ax.tick_params(labelsize=19)
-#plt.xlim(0.0, 10.0)
-plt.ylim(1, 39)
-
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.gcf().subplots_adjust(bottom=0.15)
-plt.gcf().subplots_adjust(top=0.87)
-#surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
-#plt.plot(times,energies, 'ro')
-surf = ax.contourf(X,Y,Z,levels=[0.0, 0.008, 0.016, 0.024, 0.032, 0.040, 0.048, 0.056, 0.0646, 0.072],cmap=plt.cm.jet)
-#surf = ax.contourf(X,Y,Z,cmap=plt.cm.jet,norm = LogNorm())
-ax.set_xlabel('detection time [s]', fontsize=19)
-ax.set_ylabel('energy [MeV]', fontsize=19)
-#ax.set_title('m = '+str(M)+' eV - ' + str(events) + ' events - D = '+str(D)+ ' Mpc \n'+str(det_type), fontsize=19)
-#plt.plot(times,energies, 'ro')
-ax.xaxis.set_tick_params(labelsize=19, width=2)
-ax.yaxis.set_tick_params(labelsize=19, width=2)
-ax.xaxis.set_minor_formatter(plt.FormatStrFormatter('%d'))
-# defining custom minor tick locations:
-ax.xaxis.set_minor_locator(plt.FixedLocator([50,500,2000]))
-ax.yaxis.set_ticks_position('left')
-ax.xaxis.set_ticks_position('bottom')
-ax.tick_params(axis='both',reset=False,which='both',length=8,width=2)
-cbar = fig.colorbar(surf, shrink=1, aspect=20, fraction=.12,pad=.02)
-cbar.set_label('probability',size=19)
-# access to cbar tick labels:
-cbar.ax.tick_params(labelsize=19)
-#plt.xlim(0.0, 10.0)
-plt.ylim(1, 39)
+for i in range(len(Z)):
+    for j in range(len(Z[0])):
+        if Z[i][j] < 0.0: Z[i][j]=0.0
 
 
 # Surface Plot of the arrival distribution - log scale
-'''
 fig = plt.figure()
 ax = fig.add_subplot(111)
 plt.gcf().subplots_adjust(bottom=0.15)
 plt.gcf().subplots_adjust(top=0.87)
-#surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
-surf = ax.contourf(X,Y,Z,levels=[1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],cmap=plt.cm.jet,norm = LogNorm())
-#plt.plot(times,energies, 'ro')
-#surf = ax.contourf(X,Y,Z,cmap=plt.cm.jet,norm = LogNorm())
-ax.set_xlabel('time [s]', fontsize=19)
-ax.set_ylabel('energy [MeV]', fontsize=19)
-#ax.set_title('m = '+str(M)+' eV - ' + str(events) + ' events - D = '+str(D)+ ' Mpc \n'+str(det_type), fontsize=19)
-ax.xaxis.set_tick_params(labelsize=19, width=2)
-ax.yaxis.set_tick_params(labelsize=19, width=2)
-ax.xaxis.set_minor_formatter(plt.FormatStrFormatter('%d'))
-# defining custom minor tick locations:
-ax.xaxis.set_minor_locator(plt.FixedLocator([50,500,2000]))
-ax.yaxis.set_ticks_position('left')
-ax.xaxis.set_ticks_position('bottom')
-ax.tick_params(axis='both',reset=False,which='both',length=8,width=2)
-cbar = fig.colorbar(surf, shrink=1, aspect=20, fraction=.12,pad=.02)
-cbar.set_label('# of events',size=19)
-# access to cbar tick labels:
-cbar.ax.tick_params(labelsize=19)
-#plt.xlim(0.0, 10.0)
-#plt.ylim(1, 39)
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.gcf().subplots_adjust(bottom=0.15)
-plt.gcf().subplots_adjust(top=0.87)
 surf = ax.contourf(X,Y,Z, 8, cmap=plt.cm.jet)
 #surf = ax.contourf(X,Y,Z,levels=[1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1],cmap=plt.cm.jet,norm = LogNorm())
 #surf = ax.contourf(X,Y,Z,cmap=plt.cm.jet,norm = LogNorm())
-ax.set_xlabel('time [s]', fontsize=19)
+
+ax.set_xlabel('detection time [s]', fontsize=19)
 ax.set_ylabel('energy [MeV]', fontsize=19)
 #ax.set_title('m = '+str(M)+' eV - ' + str(events) + ' events - D = '+str(D)+ ' Mpc \n'+str(det_type), fontsize=19)
-#plt.plot(times,energies, 'ro')
 ax.xaxis.set_tick_params(labelsize=19, width=2)
 ax.yaxis.set_tick_params(labelsize=19, width=2)
 ax.xaxis.set_minor_formatter(plt.FormatStrFormatter('%d'))
@@ -198,12 +83,12 @@ ax.yaxis.set_ticks_position('left')
 ax.xaxis.set_ticks_position('bottom')
 ax.tick_params(axis='both',reset=False,which='both',length=8,width=2)
 cbar = fig.colorbar(surf, shrink=1, aspect=20, fraction=.12,pad=.02)
-cbar.set_label('# of events',size=19)
+cbar.set_label('probability',size=19)
 # access to cbar tick labels:
 cbar.ax.tick_params(labelsize=19)
-#plt.xlim(0.0, 10.0)
-#plt.ylim(1, 39)
-'''
+plt.ylim(1, 39)
+
+
 
 '''
 # plot original spectrum
